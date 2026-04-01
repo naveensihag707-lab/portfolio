@@ -1,6 +1,11 @@
+import React, { useState, useEffect, useRef, ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Github, Linkedin, Mail, ExternalLink, GraduationCap, Award, Code2, Cpu, Globe, User, Send, ChevronRight, Moon, Sun } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Github, Linkedin, Mail, ExternalLink, GraduationCap, Award, Code2, Cpu, Globe, User, Send, ChevronRight, Moon, Sun, LogIn, ShieldCheck, LogOut } from "lucide-react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import { logout } from "./firebase";
+import AdminPage from "./components/AdminPage";
+import LoginPage from "./components/LoginPage";
 
 // --- Types ---
 interface Project {
@@ -63,7 +68,7 @@ const SKILLS: Skill[] = [
 
 // --- Components ---
 
-const SectionHeading = ({ children, subtitle }: { children: React.ReactNode; subtitle?: string }) => (
+const SectionHeading = ({ children, subtitle }: { children: ReactNode; subtitle?: string }) => (
   <div className="mb-12">
     <motion.h2 
       initial={{ opacity: 0, y: 20 }}
@@ -94,7 +99,7 @@ const SectionHeading = ({ children, subtitle }: { children: React.ReactNode; sub
   </div>
 );
 
-const ProjectCard = ({ project }: { project: Project }) => {
+const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -159,7 +164,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
   );
 };
 
-const SkillBadge = ({ skill }: { skill: Skill }) => (
+const SkillBadge: React.FC<{ skill: Skill }> = ({ skill }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.8 }}
     whileInView={{ opacity: 1, scale: 1 }}
@@ -181,12 +186,14 @@ const SkillBadge = ({ skill }: { skill: Skill }) => (
   </motion.div>
 );
 
-export default function App() {
+function Portfolio() {
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [scrolled, setScrolled] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -287,14 +294,16 @@ export default function App() {
             {/* Navigation */}
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'py-4' : 'py-8'}`}>
               <div className="container mx-auto px-6 flex justify-between items-center">
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-2xl font-display font-bold tracking-tighter"
-                >
-                  NAVEEN<span className="text-accent">.</span>
-                </motion.div>
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-2xl font-display font-bold tracking-tighter"
+                  >
+                    NAVEEN<span className="text-accent">.</span>
+                  </motion.div>
+                </div>
                 
                 <motion.div 
                   initial={{ opacity: 0, y: -20 }}
@@ -307,6 +316,14 @@ export default function App() {
                       {item}
                     </a>
                   ))}
+                  {!user && (
+                    <button 
+                      onClick={() => navigate('/login')}
+                      className="text-sm font-bold text-accent hover:opacity-80 transition-opacity"
+                    >
+                      Sign In
+                    </button>
+                  )}
                 </motion.div>
 
                 <motion.div 
@@ -321,6 +338,36 @@ export default function App() {
                   >
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                   </button>
+
+                  {!user ? (
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate('/login')}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-accent text-background rounded-full text-sm font-bold hover:glow-shadow transition-all"
+                    >
+                      <LogIn size={16} /> <span>Sign In</span>
+                    </motion.button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {isAdmin && (
+                        <button 
+                          onClick={() => navigate('/admin')}
+                          className="p-2.5 glass rounded-full text-accent hover:bg-accent hover:text-background transition-all"
+                          title="Admin Dashboard"
+                        >
+                          <ShieldCheck size={20} />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => logout()}
+                        className="p-2.5 glass rounded-full text-foreground/60 hover:text-destructive transition-all"
+                        title="Logout"
+                      >
+                        <LogOut size={20} />
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               </div>
             </nav>
@@ -376,6 +423,14 @@ export default function App() {
                       <button className="px-8 py-4 bg-accent text-background font-bold rounded-2xl hover:glow-shadow transition-all flex items-center gap-2 group">
                         View Projects <ChevronRight className="group-hover:translate-x-1 transition-transform" />
                       </button>
+                      {!user && (
+                        <button 
+                          onClick={() => navigate('/login')}
+                          className="px-8 py-4 bg-accent/10 text-accent font-bold rounded-2xl hover:bg-accent hover:text-background transition-all flex items-center gap-2"
+                        >
+                          <LogIn size={18} /> Sign In to Explore
+                        </button>
+                      )}
                       <button className="px-8 py-4 glass font-bold rounded-2xl hover:bg-foreground/5 transition-all">
                         Download CV
                       </button>
@@ -449,8 +504,8 @@ export default function App() {
                   </SectionHeading>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                    {SKILLS.map((skill, index) => (
-                      <SkillBadge key={index} skill={skill} />
+                    {SKILLS.map((skill) => (
+                      <SkillBadge key={skill.name} skill={skill} />
                     ))}
                   </div>
                 </div>
@@ -464,8 +519,8 @@ export default function App() {
                   </SectionHeading>
                   
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {PROJECTS.map((project, index) => (
-                      <ProjectCard key={index} project={project} />
+                    {PROJECTS.map((project) => (
+                      <ProjectCard key={project.title} project={project} />
                     ))}
                   </div>
                 </div>
@@ -586,5 +641,15 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Portfolio />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin" element={<AdminPage />} />
+    </Routes>
   );
 }
