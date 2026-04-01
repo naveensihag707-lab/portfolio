@@ -68,6 +68,12 @@ export default function AdminPage() {
           <div className="flex justify-center items-center h-64">
             <div className="w-12 h-12 border-2 border-accent/10 border-t-accent rounded-full animate-spin" />
           </div>
+        ) : users.length === 0 ? (
+          <div className="glass p-12 rounded-[40px] text-center">
+            <User className="mx-auto mb-6 text-accent/20" size={64} />
+            <h2 className="text-2xl font-display font-bold mb-2">No Users Yet</h2>
+            <p className="text-foreground/60">When users sign in to your site, they will appear here.</p>
+          </div>
         ) : (
           <div className="grid gap-6">
             {users.map((user) => (
